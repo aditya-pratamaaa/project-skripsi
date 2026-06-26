@@ -271,69 +271,15 @@ div[data-testid="stToolbar"] { right: 1rem; }
 .stApp > header { background: transparent; }
 div[data-testid="stAppViewContainer"] > .main { padding-top: 0; }
 
-/* Kalkulator styles */
-.section-box {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 18px 20px;
-    margin-bottom: 16px;
-}
+.small-note { color: #6b7280; font-size: 0.84rem; }
 
-.result-box {
-    background: #eef2ff;
-    border: 1px solid #c7d2fe;
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin-top: 12px;
-}
-
-.result-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 7px 0;
-    border-bottom: 1px solid #e0e7ff;
-    font-size: 0.92rem;
-}
-
-.result-row:last-child {
-    border-bottom: none;
-}
-
-.result-label {
-    color: #374151;
-    font-weight: 500;
-}
-
-.result-value {
-    color: #4f46e5;
-    font-weight: 700;
-    font-size: 0.98rem;
-}
-
-.pill-year {
-    display: inline-block;
-    background: #4f46e5;
-    color: white;
-    border-radius: 999px;
-    padding: 2px 10px;
+.calc-section-label {
     font-size: 0.72rem;
-    font-weight: 600;
-    margin-right: 8px;
-}
-
-.avg-box {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 10px;
-    padding: 14px 18px;
-    margin-top: 10px;
-}
-
-.small-note {
-    color: #6b7280;
-    font-size: 0.84rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin: 18px 0 6px 0;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -390,13 +336,11 @@ def dunn_index(data, labels, centers):
     unique_labels = np.unique(labels)
     if len(unique_labels) < 2:
         return np.nan
-
     inter_dists = [
         np.linalg.norm(centers[a] - centers[b])
         for a, b in combinations(range(len(centers)), 2)
     ]
     min_inter_dist = min(inter_dists)
-
     max_intra_diam = 0.0
     for lbl in unique_labels:
         members = data[labels == lbl]
@@ -406,11 +350,9 @@ def dunn_index(data, labels, centers):
             [np.linalg.norm(p1 - p2) for p1, p2 in combinations(members, 2)]
         )
         max_intra_diam = max(max_intra_diam, diam)
-
     if max_intra_diam == 0:
         return np.nan
     return min_inter_dist / max_intra_diam
-
 
 def compute_cluster_metrics(data_scaled, cluster_labels, centers):
     try:
@@ -420,9 +362,7 @@ def compute_cluster_metrics(data_scaled, cluster_labels, centers):
     dunn = dunn_index(data_scaled, cluster_labels, centers)
     return sil, dunn
 
-FEATURES = [
-    'ROA', 'ROE', 'NPM', 'DER', 'NPL', 'Volatilitas', 'VaR', 'EPS'
-]
+FEATURES = ['ROA', 'ROE', 'NPM', 'DER', 'NPL', 'Volatilitas', 'VaR', 'EPS']
 
 FEATURE_DESC = {
     'ROA': 'Return on Asset — profitabilitas perusahaan',
@@ -469,14 +409,14 @@ with st.sidebar:
     st.session_state['n_clusters'] = st.slider(
         "Jumlah Cluster", min_value=2, max_value=6,
         value=st.session_state['n_clusters'], step=1,
-        help="Banyaknya kelompok risiko yang dibentuk. Default 3 (Low/Medium/High). Dibatasi sampai 6 karena dengan 8 variabel & data yang biasanya puluhan saham, cluster lebih banyak dari itu cenderung terlalu granular (1-2 saham per cluster) dan kehilangan makna sebagai kelompok."
+        help="Banyaknya kelompok risiko yang dibentuk."
     )
     n_clusters = st.session_state['n_clusters']
-    st.caption(f"{n_clusters} cluster dibentuk dari data. Cek metrik pembanding di tab Modeling untuk menilai apakah jumlah ini optimal.")
-    param_card("Fuzziness (m)", m_fuzzy, "Mengatur tingkat ke-fuzzy-an keanggotaan. Semakin besar nilainya, batas antar cluster semakin kabur/melebur.")
-    param_card("Max Iteration", max_iter, "Batas maksimum perulangan yang dilakukan algoritma sebelum berhenti, meski belum konvergen.")
-    param_card("Error Tolerance", error_tol, "Ambang batas perubahan minimum antar iterasi. Jika perubahan lebih kecil dari ini, proses dianggap konvergen dan berhenti.")
-    param_card("Random Seed", RANDOM_SEED, "Angka kunci untuk inisialisasi acak. Dengan nilai tetap, hasil clustering selalu sama di setiap proses running.")
+    st.caption(f"{n_clusters} cluster dibentuk dari data.")
+    param_card("Fuzziness (m)", m_fuzzy, "Mengatur tingkat ke-fuzzy-an keanggotaan.")
+    param_card("Max Iteration", max_iter, "Batas maksimum perulangan algoritma.")
+    param_card("Error Tolerance", error_tol, "Ambang batas perubahan minimum antar iterasi.")
+    param_card("Random Seed", RANDOM_SEED, "Angka kunci untuk inisialisasi acak yang konsisten.")
 
     st.markdown("<div class='sidebar-label'>Status Data</div>", unsafe_allow_html=True)
     _df_main = st.session_state.get('df_main')
@@ -511,6 +451,9 @@ tab_home, tab_tutorial, tab_input, tab_prep, tab_model, tab_hasil = st.tabs(
     ["🏠  Home", "📘  Tutorial", "📤  Input Data", "🧮  Preprocessing", "⚙️  Modeling", "📊  Hasil"]
 )
 
+# ─────────────────────────────────────────────
+# TAB HOME
+# ─────────────────────────────────────────────
 with tab_home:
     st.markdown(f"""
     <div class="hero">
@@ -565,6 +508,9 @@ with tab_home:
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
     st.info("Buka tab **Tutorial** untuk panduan lengkap, atau langsung ke tab **Input Data** untuk mulai.")
 
+# ─────────────────────────────────────────────
+# TAB TUTORIAL
+# ─────────────────────────────────────────────
 with tab_tutorial:
     section_title("book", "Tutorial Penggunaan")
     st.caption("Ikuti langkah-langkah berikut agar hasil klasterisasi optimal.")
@@ -575,15 +521,13 @@ with tab_tutorial:
         ("Isi Data", "Isi setiap baris dengan kode saham dan nilai rasio keuangannya. Jangan mengubah nama kolom pada header."),
         ("Upload File", "Upload kembali file Excel yang sudah diisi. Sistem otomatis memvalidasi kolom, membuang baris kosong, dan mengonversi nilai ke format numerik."),
         ("Edit Data (Opsional)", "Data dapat diedit langsung di tabel interaktif tanpa perlu mengunggah ulang file — termasuk menambah atau menghapus baris."),
-        ("Kalkulator Variabel", "Gunakan kalkulator di tab Input Data untuk menghitung 8 variabel FCM dari laporan keuangan mentah."),
+        ("Kalkulator Variabel (Opsional)", "Gunakan tab Kalkulator di Input Data untuk menghitung 8 variabel FCM dari laporan keuangan mentah. Hasil langsung masuk ke tabel input FCM."),
         ("Preprocessing", "Nilai kosong otomatis diisi dengan median kolom, lalu seluruh data dinormalisasi ke rentang 0–1 menggunakan MinMaxScaler."),
         ("Modeling", "Algoritma Fuzzy C-Means membentuk cluster sesuai jumlah yang dipilih. Perhatikan nilai PC/FPC, Silhouette Score, dan Dunn Index untuk menilai kualitas pemisahan cluster."),
         ("Lihat Hasil", "Lihat label profil risiko (Low, Medium, High), visualisasi sebaran ROA vs NPL, heatmap derajat keanggotaan, dan unduh hasil dalam format CSV."),
     ]
     for i, (title, desc) in enumerate(steps, start=1):
-        st.markdown(f"""
-        <div class="card-step"><b>{i}. {title}</b><br>{desc}</div>
-        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="card-step"><b>{i}. {title}</b><br>{desc}</div>', unsafe_allow_html=True)
 
     st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
     st.markdown("##### Pertanyaan Umum")
@@ -606,15 +550,15 @@ with tab_tutorial:
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
     st.info("Lanjut ke tab **Input Data** untuk mulai mengunggah data saham.")
 
+# ─────────────────────────────────────────────
+# TAB INPUT DATA
+# ─────────────────────────────────────────────
 with tab_input:
     step_track("Input Data")
     section_title("upload", "Input Data")
-    st.caption(f"Isi data saham langsung di tabel (minimal {n_clusters + 2} baris), atau gunakan import Excel sebagai alternatif.")
+    st.caption(f"Isi data saham langsung di tabel atau import Excel (minimal {n_clusters + 2} baris), atau gunakan Kalkulator untuk menghitung variabel dari laporan keuangan.")
     st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
-    # =========================================================
-    # TAB INPUT: DATA EDITOR (EXISTING)
-    # =========================================================
     EMPTY_ROWS = 5
     if st.session_state['df_main'] is None:
         st.session_state['df_main'] = pd.DataFrame({
@@ -624,73 +568,12 @@ with tab_input:
     if 'editor_version' not in st.session_state:
         st.session_state['editor_version'] = 0
 
-    # =========================================================
-    # TAB INPUT: KALKULATOR (NEW)
-    # =========================================================
-    # Helper functions for calculator
-    def fmt_num(x, decimals=4):
-        try:
-            return f"{float(x):,.{decimals}f}"
-        except Exception:
-            return str(x)
+    subtab_manual, subtab_kalkulator = st.tabs(["📝  Input Manual & Excel", "🧮  Kalkulator Variabel"])
 
-    def parse_harga_list(harga_raw: str):
-        if not harga_raw or not harga_raw.strip():
-            return []
-        try:
-            harga_list = [float(x.strip()) for x in harga_raw.split(",") if x.strip()]
-        except Exception:
-            raise ValueError("Format harga saham tidak valid. Gunakan angka dipisah koma.")
-        if any(h <= 0 for h in harga_list):
-            raise ValueError("Semua harga saham harus lebih besar dari 0.")
-        return harga_list
-
-    def hitung_variabel(
-        laba,
-        pendapatan,
-        aset,
-        ekuitas,
-        utang,
-        npl_gross,
-        total_kredit,
-        saham_beredar,
-        harga_list
-    ):
-        hasil = {}
-        hasil['ROA'] = round((laba / aset * 100), 4) if aset > 0 else 0.0
-        hasil['ROE'] = round((laba / ekuitas * 100), 4) if ekuitas > 0 else 0.0
-        hasil['NPM'] = round((laba / pendapatan * 100), 4) if pendapatan > 0 else 0.0
-        hasil['DER'] = round((utang / ekuitas * 100), 4) if ekuitas > 0 else 0.0
-        hasil['NPL'] = round((npl_gross / total_kredit * 100), 4) if total_kredit > 0 else 0.0
-        hasil['EPS'] = round((laba * 1_000_000 / saham_beredar), 4) if saham_beredar > 0 else 0.0
-        hasil['Volatilitas'] = 0.0
-        hasil['VaR'] = 0.0
-        hasil['Jumlah_Data_Harga'] = len(harga_list)
-
-        if len(harga_list) >= 3:
-            prices = np.array(harga_list, dtype=float)
-            returns = np.diff(prices) / prices[:-1]
-            vol_bulanan = np.std(returns, ddof=1) if len(returns) > 1 else 0.0
-            vol_tahunan = vol_bulanan * np.sqrt(12) * 100
-            mean_ret = np.mean(returns) if len(returns) > 0 else 0.0
-            var_95 = max(0, (1.645 * vol_bulanan - mean_ret) * 100)
-            hasil['Volatilitas'] = round(vol_tahunan, 4)
-            hasil['VaR'] = round(var_95, 4)
-        return hasil
-
-    def periods_to_dataframe(periods):
-        if not periods:
-            return pd.DataFrame()
-        df = pd.DataFrame(periods).sort_values("Tahun").reset_index(drop=True)
-        return df
-
-    # Tabs for input methods
-    input_tab1, input_tab2, input_tab3 = st.tabs(["📝 Edit Data Langsung", "📤 Upload Excel", "🧮 Kalkulator Variabel"])
-
-    # =========================================================
-    # TAB 1: EDIT DATA LANGSUNG
-    # =========================================================
-    with input_tab1:
+    # ════════════════════════════════════════
+    # SUB-TAB 1: INPUT MANUAL & EXCEL
+    # ════════════════════════════════════════
+    with subtab_manual:
         st.markdown("##### Tabel Data Saham")
         st.caption("Klik sel untuk mengisi. Tambah baris dengan tombol (+) di bagian bawah tabel.")
 
@@ -717,6 +600,61 @@ with tab_input:
 
         df_valid = df_edit[df_edit['Ticker'].astype(str).str.strip() != '']
 
+        st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+
+        with st.expander("Atau import dari file Excel"):
+            template_df = pd.DataFrame({
+                'Ticker': [''], 'ROA': [0], 'ROE': [0], 'NPM': [0], 'DER': [0],
+                'NPL': [0], 'Volatilitas': [0], 'VaR': [0], 'EPS': [0]
+            })
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                template_df.to_excel(writer, sheet_name='Template Data', index=False)
+            excel_data = output.getvalue()
+
+            col1, col2 = st.columns([1.3, 1])
+            with col1:
+                st.markdown("**1. Download template, lalu isi data**")
+                st.download_button(
+                    label="Download Template Excel",
+                    data=excel_data,
+                    file_name="template_fcm_saham.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
+                st.caption("Jangan ubah nama kolom pada header.")
+            with col2:
+                st.markdown("**2. Upload kembali file Excel**")
+                uploaded_file = st.file_uploader(
+                    "Upload file Excel", type=['xlsx', 'xls'],
+                    key="excel_uploader", label_visibility="collapsed"
+                )
+
+            if uploaded_file is not None and st.session_state.get('_last_uploaded_name') != uploaded_file.name:
+                try:
+                    df_import = pd.read_excel(uploaded_file, header=0)
+                    required_columns = ['Ticker'] + FEATURES
+                    missing_columns = [col for col in required_columns if col not in df_import.columns]
+                    if missing_columns:
+                        st.error(f"Kolom hilang: {', '.join(missing_columns)}")
+                    else:
+                        df_import = df_import.dropna(how='all')
+                        df_import = df_import[df_import['Ticker'].notna()]
+                        df_import = df_import[~df_import['Ticker'].astype(str).str.contains('Ticker', case=False, na=False)]
+                        for col in FEATURES:
+                            df_import[col] = pd.to_numeric(df_import[col], errors='coerce')
+                        df_import = df_import.dropna(subset=FEATURES, how='all')
+                        if len(df_import) == 0:
+                            st.error("Tidak ada data valid")
+                        else:
+                            st.success(f"Berhasil mengimport {len(df_import)} data saham")
+                            st.session_state['df_main'] = df_import.copy()
+                            st.session_state['_last_uploaded_name'] = uploaded_file.name
+                            st.session_state['editor_version'] = st.session_state.get('editor_version', 0) + 1
+                            st.rerun()
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
+
         if len(df_valid) >= n_clusters + 2:
             st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
             tabA, tabB = st.tabs(["Statistik Deskriptif", "Korelasi Variabel"])
@@ -726,85 +664,63 @@ with tab_input:
                 fig_corr, ax_corr = plt.subplots(figsize=(8, 4))
                 sns.heatmap(df_valid[FEATURES].astype(float).corr(), annot=True, cmap="coolwarm", fmt=".2f", ax=ax_corr)
                 st.pyplot(fig_corr)
-
             st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
             st.success("Data siap. Lanjut ke tab **Preprocessing**.")
         else:
             st.warning(f"Minimal {n_clusters + 2} baris dengan Ticker terisi diperlukan untuk melanjutkan. Saat ini: {len(df_valid)}.")
 
-    # =========================================================
-    # TAB 2: UPLOAD EXCEL
-    # =========================================================
-    with input_tab2:
-        st.markdown("##### Import dari File Excel")
-        
-        template_df = pd.DataFrame({
-            'Ticker': [''], 'ROA': [0], 'ROE': [0], 'NPM': [0], 'DER': [0],
-            'NPL': [0], 'Volatilitas': [0], 'VaR': [0], 'EPS': [0]
-        })
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            template_df.to_excel(writer, sheet_name='Template Data', index=False)
-        excel_data = output.getvalue()
+    # ════════════════════════════════════════
+    # SUB-TAB 2: KALKULATOR VARIABEL
+    # ════════════════════════════════════════
+    with subtab_kalkulator:
 
-        col1, col2 = st.columns([1.3, 1])
-        with col1:
-            st.markdown("**1. Download template, lalu isi data**")
-            st.download_button(
-                label="Download Template Excel",
-                data=excel_data,
-                file_name="template_fcm_saham.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-                key="template_download"
-            )
-            st.caption("Jangan ubah nama kolom pada header.")
-        with col2:
-            st.markdown("**2. Upload kembali file Excel**")
-            uploaded_file = st.file_uploader(
-                "Upload file Excel", type=['xlsx', 'xls'],
-                key="excel_uploader", label_visibility="collapsed"
-            )
-
-        if uploaded_file is not None and st.session_state.get('_last_uploaded_name') != uploaded_file.name:
+        def fmt_num(x, decimals=4):
             try:
-                df_import = pd.read_excel(uploaded_file, header=0)
+                return f"{float(x):,.{decimals}f}"
+            except Exception:
+                return str(x)
 
-                required_columns = ['Ticker'] + FEATURES
-                missing_columns = [col for col in required_columns if col not in df_import.columns]
+        def parse_harga_list(harga_raw: str):
+            if not harga_raw or not harga_raw.strip():
+                return []
+            try:
+                harga_list = [float(x.strip()) for x in harga_raw.split(",") if x.strip()]
+            except Exception:
+                raise ValueError("Format harga saham tidak valid. Gunakan angka dipisah koma.")
+            if any(h <= 0 for h in harga_list):
+                raise ValueError("Semua harga saham harus lebih besar dari 0.")
+            return harga_list
 
-                if missing_columns:
-                    st.error(f"Kolom hilang: {', '.join(missing_columns)}")
-                else:
-                    df_import = df_import.dropna(how='all')
-                    df_import = df_import[df_import['Ticker'].notna()]
-                    df_import = df_import[~df_import['Ticker'].astype(str).str.contains('Ticker', case=False, na=False)]
+        def hitung_variabel(laba, pendapatan, aset, ekuitas, utang, npl_gross, total_kredit, saham_beredar, harga_list):
+            hasil = {}
+            hasil['ROA'] = round((laba / aset * 100), 4) if aset > 0 else 0.0
+            hasil['ROE'] = round((laba / ekuitas * 100), 4) if ekuitas > 0 else 0.0
+            hasil['NPM'] = round((laba / pendapatan * 100), 4) if pendapatan > 0 else 0.0
+            hasil['DER'] = round((utang / ekuitas * 100), 4) if ekuitas > 0 else 0.0
+            hasil['NPL'] = round((npl_gross / total_kredit * 100), 4) if total_kredit > 0 else 0.0
+            hasil['EPS'] = round((laba * 1_000_000 / saham_beredar), 4) if saham_beredar > 0 else 0.0
+            hasil['Volatilitas'] = 0.0
+            hasil['VaR'] = 0.0
+            hasil['Jumlah_Data_Harga'] = len(harga_list)
+            if len(harga_list) >= 3:
+                prices = np.array(harga_list, dtype=float)
+                returns = np.diff(prices) / prices[:-1]
+                vol_bulanan = np.std(returns, ddof=1) if len(returns) > 1 else 0.0
+                vol_tahunan = vol_bulanan * np.sqrt(12) * 100
+                mean_ret = np.mean(returns) if len(returns) > 0 else 0.0
+                var_95 = max(0, (1.645 * vol_bulanan - mean_ret) * 100)
+                hasil['Volatilitas'] = round(vol_tahunan, 4)
+                hasil['VaR'] = round(var_95, 4)
+            return hasil
 
-                    for col in FEATURES:
-                        df_import[col] = pd.to_numeric(df_import[col], errors='coerce')
+        def periods_to_dataframe(periods):
+            if not periods:
+                return pd.DataFrame()
+            return pd.DataFrame(periods).sort_values("Tahun").reset_index(drop=True)
 
-                    df_import = df_import.dropna(subset=FEATURES, how='all')
-
-                    if len(df_import) == 0:
-                        st.error("Tidak ada data valid")
-                    else:
-                        st.success(f"Berhasil mengimport {len(df_import)} data saham")
-                        st.session_state['df_main'] = df_import.copy()
-                        st.session_state['_last_uploaded_name'] = uploaded_file.name
-                        st.session_state['editor_version'] = st.session_state.get('editor_version', 0) + 1
-                        st.rerun()
-
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
-
-    # =========================================================
-    # TAB 3: KALKULATOR VARIABEL
-    # =========================================================
-    with input_tab3:
         st.markdown("""
         ### 🧮 Kalkulator Variabel FCM
-        Input angka mentah dari laporan keuangan → otomatis hitung ROA, ROE, NPM, DER, NPL, EPS. 
-        Input harga saham bulanan → hitung Volatilitas & VaR.
+        Input angka mentah dari laporan keuangan → otomatis hitung ROA, ROE, NPM, DER, NPL, EPS, Volatilitas & VaR. Hasil langsung masuk ke input FCM.
         """)
 
         with st.expander("📘 Definisi Variabel & Catatan Metodologi"):
@@ -819,7 +735,7 @@ with tab_input:
 
             **Risiko pasar**
             - **Volatilitas** dihitung dari **standar deviasi return bulanan** lalu diannualisasi dengan **√12**
-            - **VaR** pada aplikasi ini adalah **Parametric VaR return bulanan 95% (%)**, sehingga dibaca sebagai **potensi kerugian return dalam persen**, **bukan VaR nominal rupiah**
+            - **VaR** adalah **Parametric VaR return bulanan 95% (%)**, dibaca sebagai **potensi kerugian return dalam persen**
 
             **Catatan**
             - Semua nilai laporan keuangan diinput dalam **juta rupiah**
@@ -830,7 +746,6 @@ with tab_input:
 
         st.markdown("---")
 
-        # Input Ticker untuk kalkulator
         col_t1, col_t2 = st.columns([2, 3])
         with col_t1:
             ticker_input = st.text_input(
@@ -854,10 +769,7 @@ with tab_input:
                 st.session_state["ticker_name"] = new_ticker
 
         st.markdown("### 📄 Input Laporan Keuangan per Periode")
-        st.caption(
-            "Isi angka dalam satuan **juta rupiah** "
-            "(kecuali Jumlah Saham Beredar dalam lembar, dan harga saham dalam rupiah)."
-        )
+        st.caption("Isi angka dalam satuan **juta rupiah** (kecuali Jumlah Saham Beredar dalam lembar, dan harga saham dalam rupiah).")
 
         _k = st.session_state["form_reset_counter"]
 
@@ -865,17 +777,14 @@ with tab_input:
             st.markdown("**Data Laporan Laba Rugi & Neraca**")
 
             c1, c2, c3 = st.columns(3)
-
             with c1:
                 inp_tahun = st.number_input("Tahun", min_value=2000, max_value=2035, value=2023, step=1, key=f"calc_inp_tahun_{_k}")
                 inp_laba = st.number_input("Laba Bersih (juta Rp)", value=0.0, step=100.0, format="%.2f", key=f"calc_inp_laba_{_k}")
                 inp_pendapatan = st.number_input("Pendapatan Operasional (juta Rp)", value=0.0, step=100.0, format="%.2f", key=f"calc_inp_pendapatan_{_k}")
-
             with c2:
                 inp_aset = st.number_input("Total Aset (juta Rp)", value=0.0, step=100.0, format="%.2f", key=f"calc_inp_aset_{_k}")
                 inp_ekuitas = st.number_input("Total Ekuitas (juta Rp)", value=0.0, step=100.0, format="%.2f", key=f"calc_inp_ekuitas_{_k}")
                 inp_utang = st.number_input("Total Utang (juta Rp)", value=0.0, step=100.0, format="%.2f", key=f"calc_inp_utang_{_k}")
-
             with c3:
                 inp_kredit_bermasalah = st.number_input("Kredit Bermasalah / NPL Gross (juta Rp)", value=0.0, step=100.0, format="%.2f", key=f"calc_inp_npl_{_k}")
                 inp_total_kredit = st.number_input("Total Kredit yang Disalurkan (juta Rp)", value=0.0, step=100.0, format="%.2f", key=f"calc_inp_kredit_{_k}")
@@ -890,61 +799,42 @@ with tab_input:
             )
 
             col_btn1, col_btn2 = st.columns([2, 1])
-
             with col_btn1:
                 btn_hitung = st.button("Hitung & Tambahkan ke Daftar", use_container_width=True, key=f"calc_btn_hitung_{_k}")
-
             with col_btn2:
                 btn_kosong = st.button("Kosongkan Form", use_container_width=True, key=f"calc_btn_kosong_{_k}")
 
-            # Proses tombol Hitung
             if btn_hitung:
                 error_flag = False
-
                 if not st.session_state["ticker_name"]:
                     st.warning("Silakan isi kode saham (ticker) terlebih dahulu.")
                     error_flag = True
-
                 if not error_flag:
                     try:
                         harga_list = parse_harga_list(inp_harga_raw)
                     except ValueError as e:
                         st.error(str(e))
                         error_flag = True
-
                 if not error_flag:
                     if 0 < len(harga_list) < 12:
                         st.warning(
                             f"Anda hanya memasukkan {len(harga_list)} harga. "
-                            "Volatilitas/VaR tetap dihitung, tetapi hasil akan lebih stabil jika menggunakan 12 harga bulanan."
+                            "Volatilitas/VaR tetap dihitung, tetapi hasil lebih stabil dengan 12 harga bulanan."
                         )
-
                     hasil = hitung_variabel(
-                        laba=inp_laba,
-                        pendapatan=inp_pendapatan,
-                        aset=inp_aset,
-                        ekuitas=inp_ekuitas,
-                        utang=inp_utang,
-                        npl_gross=inp_kredit_bermasalah,
-                        total_kredit=inp_total_kredit,
-                        saham_beredar=inp_saham_beredar,
-                        harga_list=harga_list
+                        laba=inp_laba, pendapatan=inp_pendapatan, aset=inp_aset,
+                        ekuitas=inp_ekuitas, utang=inp_utang,
+                        npl_gross=inp_kredit_bermasalah, total_kredit=inp_total_kredit,
+                        saham_beredar=inp_saham_beredar, harga_list=harga_list
                     )
-
                     periode_baru = {
                         "Ticker": st.session_state["ticker_name"],
                         "Tahun": int(inp_tahun),
-                        "ROA": hasil["ROA"],
-                        "ROE": hasil["ROE"],
-                        "NPM": hasil["NPM"],
-                        "DER": hasil["DER"],
-                        "NPL": hasil["NPL"],
-                        "Volatilitas": hasil["Volatilitas"],
-                        "VaR": hasil["VaR"],
-                        "EPS": hasil["EPS"],
-                        "Jumlah Data Harga": hasil["Jumlah_Data_Harga"]
+                        "ROA": hasil["ROA"], "ROE": hasil["ROE"], "NPM": hasil["NPM"],
+                        "DER": hasil["DER"], "NPL": hasil["NPL"],
+                        "Volatilitas": hasil["Volatilitas"], "VaR": hasil["VaR"],
+                        "EPS": hasil["EPS"], "Jumlah Data Harga": hasil["Jumlah_Data_Harga"]
                     }
-
                     tahun_list = [p["Tahun"] for p in st.session_state["periods"]]
                     if int(inp_tahun) in tahun_list:
                         idx = tahun_list.index(int(inp_tahun))
@@ -953,82 +843,74 @@ with tab_input:
                     else:
                         st.session_state["periods"].append(periode_baru)
                         st.success(f"Periode {int(inp_tahun)} berhasil ditambahkan.")
-
                     st.rerun()
 
-            # Proses tombol Kosongkan Form
             if btn_kosong:
                 st.session_state["form_reset_counter"] += 1
                 st.rerun()
 
-        # =====================================================
-        # HASIL PER PERIODE (KALKULATOR)
-        # =====================================================
+        # ── Hasil per periode ──────────────────────────────────────────
         if st.session_state["periods"]:
+            df_periods = periods_to_dataframe(st.session_state["periods"])
+            ticker_final = st.session_state["ticker_name"] or "SAHAM"
+
             st.markdown("---")
             st.markdown("### 📊 Hasil Perhitungan per Periode")
 
-            df_periods = periods_to_dataframe(st.session_state["periods"])
+            # Tabel per periode — plain dataframe
+            display_cols = ["Tahun"] + FEATURES + ["Jumlah Data Harga"]
+            st.dataframe(
+                df_periods[display_cols].round(4),
+                use_container_width=True,
+                hide_index=True
+            )
 
-            with st.expander("📋 Tabel Hasil Semua Periode", expanded=False):
-                st.dataframe(df_periods, use_container_width=True)
-
-            for _, row in df_periods.iterrows():
-                rows_html = ""
-                for f in FEATURES:
-                    rows_html += (
-                        f"<div class='result-row'>"
-                        f"<span class='result-label'>{f}</span>"
-                        f"<span class='result-value'>{fmt_num(row[f], 4)}</span>"
-                        f"</div>"
-                    )
-
-                note_harga = f"<div class='small-note'>Jumlah data harga: {int(row['Jumlah Data Harga'])}</div>"
-
-                st.markdown(f"""
-                <div class="section-box">
-                    <span class='pill-year'>{int(row['Tahun'])}</span>
-                    <b>{row['Ticker']}</b>
-                    {note_harga}
-                    <div class="result-box">{rows_html}</div>
-                </div>
-                """, unsafe_allow_html=True)
-
+            # Tabel rata-rata (jika lebih dari 1 periode)
             avg = None
             if len(df_periods) > 1:
-                st.markdown("### 📈 Rata-rata Semua Periode")
+                st.markdown("<div class='calc-section-label'>Rata-rata semua periode</div>", unsafe_allow_html=True)
+                avg_row = df_periods[FEATURES].mean().round(4).to_frame(name="Rata-rata").T
+                st.dataframe(avg_row, use_container_width=True, hide_index=True)
                 avg = df_periods[FEATURES].mean()
 
-                avg_html = ""
-                for f in FEATURES:
-                    avg_html += (
-                        f"<div class='result-row'>"
-                        f"<span class='result-label'>{f} (rata-rata {len(df_periods)} periode)</span>"
-                        f"<span class='result-value'>{fmt_num(avg[f], 4)}</span>"
-                        f"</div>"
-                    )
-
-                st.markdown(
-                    f'<div class="avg-box"><div class="result-box">{avg_html}</div></div>',
-                    unsafe_allow_html=True
+            # Download hasil periode
+            st.markdown("<div class='calc-section-label'>Export</div>", unsafe_allow_html=True)
+            col_d1, col_d2 = st.columns(2)
+            with col_d1:
+                csv_periods = df_periods.to_csv(index=False).encode("utf-8")
+                st.download_button(
+                    "⬇️ CSV Hasil Periode",
+                    csv_periods,
+                    f"hasil_periode_{ticker_final}.csv",
+                    "text/csv",
+                    use_container_width=True,
+                    key="dl_csv_periods_calc"
+                )
+            with col_d2:
+                out_xlsx = BytesIO()
+                with pd.ExcelWriter(out_xlsx, engine="openpyxl") as writer:
+                    df_periods.to_excel(writer, index=False, sheet_name="Hasil_Per_Periode")
+                out_xlsx.seek(0)
+                st.download_button(
+                    "⬇️ Excel Hasil Periode",
+                    out_xlsx,
+                    f"hasil_periode_{ticker_final}.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True,
+                    key="dl_excel_periods_calc"
                 )
 
-            # =====================================================
-            # PILIH DATA FINAL UNTUK LIST FCM
-            # =====================================================
+            # ── Tambahkan ke Input FCM (langsung masuk tabel, tanpa list di bawah) ──
             st.markdown("---")
-            st.markdown("### ➕ Tambahkan ke List Input FCM")
-
-            ticker_final = st.session_state["ticker_name"] or "SAHAM"
+            st.markdown("### ➕ Masukkan ke Input FCM")
 
             if len(df_periods) > 1:
                 mode_input = st.radio(
-                    "Masukkan ke list input FCM sebagai:",
+                    "Masukkan sebagai:",
                     options=["Rata-rata semua periode", "Pilih tahun tertentu"],
                     horizontal=True,
                     key="radio_mode_fcm_calc"
                 )
-
                 if mode_input == "Pilih tahun tertentu":
                     tahun_pilihan = st.selectbox("Pilih tahun", df_periods["Tahun"].tolist(), key="sel_tahun_fcm_calc")
                     row_selected = df_periods[df_periods["Tahun"] == tahun_pilihan].iloc[0]
@@ -1037,21 +919,54 @@ with tab_input:
                     final_values = {f: round(avg[f], 4) for f in FEATURES}
             else:
                 final_values = {f: df_periods.iloc[0][f] for f in FEATURES}
+                st.caption(f"Akan memasukkan data tahun {int(df_periods.iloc[0]['Tahun'])}.")
 
             col_add, col_reset = st.columns([2, 1])
-
             with col_add:
-                if st.button(f"✅ Tambahkan {ticker_final} ke List Input FCM", use_container_width=True, key="btn_add_fcm_calc"):
+                if st.button(f"✅ Tambahkan {ticker_final} ke Tabel FCM", use_container_width=True, key="btn_add_fcm_calc"):
                     entry = {"Ticker": ticker_final, **final_values}
 
-                    existing_tickers = [x["Ticker"] for x in st.session_state["fcm_input_list"]]
-                    if ticker_final in existing_tickers:
-                        idx = existing_tickers.index(ticker_final)
-                        st.session_state["fcm_input_list"][idx] = entry
-                        st.success(f"{ticker_final} diperbarui di list input FCM.")
+                    # Pastikan df_main sudah ada
+                    if st.session_state['df_main'] is None:
+                        st.session_state['df_main'] = pd.DataFrame({
+                            'Ticker': [''] * EMPTY_ROWS,
+                            **{col: [0.0] * EMPTY_ROWS for col in FEATURES}
+                        })
+
+                    df_cur = st.session_state['df_main'].copy()
+
+                    # Cek apakah ticker sudah ada di tabel
+                    existing_idx = df_cur.index[df_cur['Ticker'].astype(str).str.strip() == ticker_final].tolist()
+
+                    if existing_idx:
+                        # Update baris yang sudah ada
+                        idx = existing_idx[0]
+                        for f in FEATURES:
+                            df_cur.at[idx, f] = entry[f]
+                        st.session_state['df_main'] = df_cur
+                        st.success(f"Data {ticker_final} diperbarui di tabel Input FCM.")
                     else:
-                        st.session_state["fcm_input_list"].append(entry)
-                        st.success(f"{ticker_final} berhasil ditambahkan ke list input FCM.")
+                        # Cari baris kosong untuk diisi
+                        empty_idx = df_cur.index[df_cur['Ticker'].astype(str).str.strip() == ''].tolist()
+                        if empty_idx:
+                            idx = empty_idx[0]
+                            df_cur.at[idx, 'Ticker'] = ticker_final
+                            for f in FEATURES:
+                                df_cur.at[idx, f] = entry[f]
+                            st.session_state['df_main'] = df_cur
+                        else:
+                            # Tambah baris baru jika tidak ada baris kosong
+                            new_row = pd.DataFrame([entry])
+                            st.session_state['df_main'] = pd.concat([df_cur, new_row], ignore_index=True)
+                        st.success(f"✅ {ticker_final} berhasil ditambahkan ke tabel Input FCM. Lanjut ke tab Input Manual untuk melihat.")
+
+                    st.session_state['editor_version'] += 1
+
+                    # Reset form kalkulator untuk saham berikutnya
+                    st.session_state["periods"] = []
+                    st.session_state["ticker_name"] = ""
+                    st.session_state["form_reset_counter"] += 1
+                    st.rerun()
 
             with col_reset:
                 if st.button("🗑️ Reset Semua Periode", use_container_width=True, key="btn_reset_periods_calc"):
@@ -1060,115 +975,20 @@ with tab_input:
                     st.session_state["form_reset_counter"] += 1
                     st.rerun()
 
-            # =====================================================
-            # HAPUS PERIODE TERTENTU
-            # =====================================================
-            st.markdown("### 🗑️ Hapus Periode Tertentu")
-            col_del1, col_del2 = st.columns([2, 1])
+            # Hapus periode tertentu
+            if len(df_periods) > 1:
+                st.markdown("<div class='calc-section-label'>Hapus periode tertentu</div>", unsafe_allow_html=True)
+                col_del1, col_del2 = st.columns([2, 1])
+                with col_del1:
+                    tahun_hapus = st.selectbox("Pilih tahun yang ingin dihapus", df_periods["Tahun"].tolist(), key="tahun_hapus_calc")
+                with col_del2:
+                    st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+                    if st.button("Hapus", use_container_width=True, key="btn_hapus_tahun_calc"):
+                        st.session_state["periods"] = [p for p in st.session_state["periods"] if p["Tahun"] != tahun_hapus]
+                        st.success(f"Periode {tahun_hapus} dihapus.")
+                        st.rerun()
 
-            with col_del1:
-                tahun_hapus = st.selectbox(
-                    "Pilih tahun yang ingin dihapus",
-                    df_periods["Tahun"].tolist(),
-                    key="tahun_hapus_calc"
-                )
-
-            with col_del2:
-                if st.button("Hapus Tahun Terpilih", use_container_width=True, key="btn_hapus_tahun_calc"):
-                    st.session_state["periods"] = [
-                        p for p in st.session_state["periods"] if p["Tahun"] != tahun_hapus
-                    ]
-                    st.success(f"Periode tahun {tahun_hapus} berhasil dihapus.")
-                    st.rerun()
-
-            # =====================================================
-            # DOWNLOAD HASIL PERIODE
-            # =====================================================
-            st.markdown("### ⬇️ Download Hasil Perhitungan Periode")
-            col_d1, col_d2 = st.columns(2)
-
-            with col_d1:
-                csv_periods = df_periods.to_csv(index=False).encode("utf-8")
-                st.download_button(
-                    "Download CSV Hasil Periode",
-                    csv_periods,
-                    file_name=f"hasil_periode_{ticker_final}.csv",
-                    mime="text/csv",
-                    use_container_width=True,
-                    key="dl_csv_periods_calc"
-                )
-
-            with col_d2:
-                def create_excel_file(df_periods=None, df_fcm=None):
-                    output = BytesIO()
-                    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-                        if df_periods is not None and not df_periods.empty:
-                            df_periods.to_excel(writer, index=False, sheet_name="Hasil_Per_Periode")
-                        if df_fcm is not None and not df_fcm.empty:
-                            df_fcm.to_excel(writer, index=False, sheet_name="Input_FCM")
-                    output.seek(0)
-                    return output
-
-                excel_periods = create_excel_file(df_periods=df_periods)
-                st.download_button(
-                    "Download Excel Hasil Periode",
-                    excel_periods,
-                    file_name=f"hasil_periode_{ticker_final}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True,
-                    key="dl_excel_periods_calc"
-                )
-
-        # =====================================================
-        # LIST INPUT FCM (DARI KALKULATOR)
-        # =====================================================
-        if st.session_state["fcm_input_list"]:
-            st.markdown("---")
-            st.markdown("### 📋 List Input FCM (Siap Dipakai)")
-
-            df_fcm = pd.DataFrame(st.session_state["fcm_input_list"])
-            st.dataframe(df_fcm, use_container_width=True)
-
-            col_f1, col_f2, col_f3 = st.columns([2, 2, 1])
-
-            with col_f1:
-                csv_fcm = df_fcm.to_csv(index=False).encode("utf-8")
-                st.download_button(
-                    "⬇️ Download CSV untuk FCM",
-                    csv_fcm,
-                    "input_fcm.csv",
-                    "text/csv",
-                    use_container_width=True,
-                    key="dl_csv_fcm_calc"
-                )
-
-            with col_f2:
-                def create_excel_file_fcm(df_fcm=None):
-                    output = BytesIO()
-                    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-                        if df_fcm is not None and not df_fcm.empty:
-                            df_fcm.to_excel(writer, index=False, sheet_name="Input_FCM")
-                    output.seek(0)
-                    return output
-                
-                excel_fcm = create_excel_file_fcm(df_fcm=df_fcm)
-                st.download_button(
-                    "⬇️ Download Excel untuk FCM",
-                    excel_fcm,
-                    "input_fcm.xlsx",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True,
-                    key="dl_excel_fcm_calc"
-                )
-
-            with col_f3:
-                if st.button("🗑️ Kosongkan List FCM", use_container_width=True, key="btn_kosong_fcm_calc"):
-                    st.session_state["fcm_input_list"] = []
-                    st.rerun()
-
-        # =====================================================
-        # DATA DUMMY
-        # =====================================================
+        # Data dummy
         with st.expander("📌 Data Dummy — Coba Inputkan Ini"):
             st.markdown("""
             ### **Ticker: BBRI — Tahun 2022**
@@ -1186,16 +1006,14 @@ with tab_input:
             | Harga Saham Bulanan | `4350, 4390, 4280, 4500, 4620, 4550, 4700, 4810, 4760, 4900, 5050, 5175` |
 
             ### **Hasil yang diharapkan (approx)**
-            - **ROA** ≈ 2.11%
-            - **ROE** ≈ 16.33%
-            - **NPM** ≈ 35.93%
-            - **DER** ≈ 675.4%
-            - **NPL** ≈ 2.22%
-            - **EPS** ≈ 261–262 Rp
-            - **Volatilitas** ≈ ~8% (annualized)
-            - **VaR** ≈ kisaran beberapa persen
+            - **ROA** ≈ 2.11% | **ROE** ≈ 16.33% | **NPM** ≈ 35.93%
+            - **DER** ≈ 675.4% | **NPL** ≈ 2.22% | **EPS** ≈ 261–262 Rp
+            - **Volatilitas** ≈ ~8% (annualized) | **VaR** ≈ kisaran beberapa persen
             """)
 
+# ─────────────────────────────────────────────
+# TAB PREPROCESSING
+# ─────────────────────────────────────────────
 with tab_prep:
     step_track("Preprocessing")
     section_title("sliders", "Preprocessing")
@@ -1209,7 +1027,6 @@ with tab_prep:
         st.warning(f"Minimal {n_clusters + 2} saham dengan Ticker terisi diperlukan. Lengkapi data di tab Input Data terlebih dahulu.")
     else:
         df_prep = _df_check_valid.copy().reset_index(drop=True)
-
         missing = df_prep[FEATURES].isnull().sum().sum()
 
         col1, col2 = st.columns(2)
@@ -1238,6 +1055,9 @@ with tab_prep:
         st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
         st.success("Normalisasi selesai. Lanjut ke tab **Modeling**.")
 
+# ─────────────────────────────────────────────
+# TAB MODELING
+# ─────────────────────────────────────────────
 with tab_model:
     step_track("Modeling")
     section_title("cpu", "Modeling — Fuzzy C-Means")
@@ -1253,16 +1073,11 @@ with tab_model:
 
         with st.spinner("Sedang melakukan clustering dengan FCM..."):
             cntr, u, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
-                data_T,
-                c=n_clusters,
-                m=m_fuzzy,
-                error=error_tol,
-                maxiter=max_iter,
-                seed=RANDOM_SEED
+                data_T, c=n_clusters, m=m_fuzzy,
+                error=error_tol, maxiter=max_iter, seed=RANDOM_SEED
             )
 
         cluster_labels = np.argmax(u, axis=0)
-
         sil_score, dunn_score = compute_cluster_metrics(data_scaled, cluster_labels, cntr)
 
         col1, col2, col3, col4 = st.columns(4)
@@ -1297,8 +1112,10 @@ with tab_model:
 
         st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
         tabM, tabC, tabK = st.tabs(["Derajat Keanggotaan", "Konvergensi Fungsi Objektif", "Metrik Pembanding (k=2..6)"])
+
         with tabM:
             st.dataframe(membership.round(4), use_container_width=True)
+
         with tabC:
             fig_jm, ax_jm = plt.subplots(figsize=(8, 3))
             ax_jm.plot(jm, linewidth=2, color="#111827")
@@ -1307,6 +1124,7 @@ with tab_model:
             ax_jm.set_ylabel("Nilai Fungsi Objektif")
             ax_jm.grid(True, alpha=0.3)
             st.pyplot(fig_jm)
+
         with tabK:
             st.caption("PC, Silhouette Score, dan Dunn Index dihitung ulang untuk beberapa nilai k guna membantu menilai apakah jumlah cluster yang dipilih sudah optimal.")
             k_range = [k for k in range(2, 7) if k <= len(df_prep) - 1]
@@ -1361,6 +1179,9 @@ with tab_model:
         st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
         st.success("Clustering selesai. Lanjut ke tab **Hasil**.")
 
+# ─────────────────────────────────────────────
+# TAB HASIL
+# ─────────────────────────────────────────────
 with tab_hasil:
     step_track("Hasil")
     section_title("result", "Hasil Klasterisasi")
@@ -1417,7 +1238,6 @@ with tab_hasil:
             return 'pill-med'
 
         risk_order_sorted = cluster_risk.sort_values()
-
         pill_color_map = {"Low": "#16a34a", "Medium-Low": "#d97706", "Medium": "#d97706", "Medium-High": "#dc2626", "High": "#dc2626"}
 
         investor_label = {
@@ -1486,27 +1306,23 @@ with tab_hasil:
                 sort_by = st.selectbox(
                     "Urutkan berdasarkan",
                     options=['Risiko (Default)', 'Ticker', 'Profil', 'Cluster'] + FEATURES,
-                    index=0,
-                    key="sort_by_hasil"
+                    index=0, key="sort_by_hasil"
                 )
             with sort_cols[1]:
                 sort_dir = st.selectbox(
                     "Arah",
                     options=["Terendah → Tertinggi", "Tertinggi → Terendah"],
-                    index=0,
-                    key="sort_dir_hasil"
+                    index=0, key="sort_dir_hasil"
                 )
 
             if sort_by == 'Risiko (Default)':
                 asc_risk = (sort_dir == "Terendah → Tertinggi")
                 hasil_sorted = hasil.sort_values(
-                    by=['_risk_num', 'Ticker'],
-                    ascending=[asc_risk, True]
+                    by=['_risk_num', 'Ticker'], ascending=[asc_risk, True]
                 ).drop(columns=['_risk_num']).reset_index(drop=True)
             else:
                 hasil_sorted = hasil.drop(columns=['_risk_num']).sort_values(
-                    by=sort_by,
-                    ascending=(sort_dir == "Terendah → Tertinggi")
+                    by=sort_by, ascending=(sort_dir == "Terendah → Tertinggi")
                 ).reset_index(drop=True)
 
             row_risk_level = hasil_sorted['Cluster'].apply(lambda c: risk_level_map.get(c - 1, "Medium"))
@@ -1519,7 +1335,6 @@ with tab_hasil:
                 return [row_colors.iloc[row.name]] * len(row)
 
             styled_hasil = hasil_sorted.style.apply(_highlight_row, axis=1)
-
             st.dataframe(
                 styled_hasil,
                 use_container_width=True,
@@ -1564,4 +1379,4 @@ with tab_hasil:
             heatmap_df = st.session_state['membership'].set_index('Ticker')
             fig_heat, ax_heat = plt.subplots(figsize=(10, 6))
             sns.heatmap(heatmap_df.iloc[:, :-1], annot=True, cmap="YlGnBu", fmt=".3f", ax=ax_heat)
-            st.pyplot(fig_heat)
+            st.pyplot(fig_heat) 

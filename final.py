@@ -565,6 +565,9 @@ with tab_input:
             'Ticker': [''] * EMPTY_ROWS,
             **{col: [0.0] * EMPTY_ROWS for col in FEATURES}
         })
+        # Ubah index agar dimulai dari 1
+        st.session_state['df_main'].index = range(1, EMPTY_ROWS + 1)
+
     if 'editor_version' not in st.session_state:
         st.session_state['editor_version'] = 0
 
@@ -590,10 +593,14 @@ with tab_input:
         col_a, col_b = st.columns([1, 4])
         with col_a:
             if st.button("Reset Data", use_container_width=True):
-                st.session_state['df_main'] = pd.DataFrame({
+                new_df = pd.DataFrame({
                     'Ticker': [''] * EMPTY_ROWS,
                     **{col: [0.0] * EMPTY_ROWS for col in FEATURES}
                 })
+                # Reset data juga menggunakan index dari 1
+                new_df.index = range(1, EMPTY_ROWS + 1)
+                st.session_state['df_main'] = new_df
+                
                 st.session_state['editor_version'] += 1
                 st.session_state.pop('_last_uploaded_name', None)
                 st.rerun()
@@ -648,6 +655,10 @@ with tab_input:
                             st.error("Tidak ada data valid")
                         else:
                             st.success(f"Berhasil mengimport {len(df_import)} data saham")
+                            # Ubah index setelah pembersihan agar dimulai dari 1
+                            df_import = df_import.reset_index(drop=True)
+                            df_import.index = range(1, len(df_import) + 1)
+                            
                             st.session_state['df_main'] = df_import.copy()
                             st.session_state['_last_uploaded_name'] = uploaded_file.name
                             st.session_state['editor_version'] = st.session_state.get('editor_version', 0) + 1
@@ -716,7 +727,9 @@ with tab_input:
         def periods_to_dataframe(periods):
             if not periods:
                 return pd.DataFrame()
-            return pd.DataFrame(periods).sort_values("Tahun").reset_index(drop=True)
+            df = pd.DataFrame(periods).sort_values("Tahun").reset_index(drop=True)
+            df.index = range(1, len(df) + 1)
+            return df
 
         st.markdown("""
         ### 🧮 Kalkulator Variabel FCM
@@ -751,7 +764,7 @@ with tab_input:
             ticker_input = st.text_input(
                 "Kode Saham (Ticker)",
                 value=st.session_state["ticker_name"],
-                placeholder="contoh: BBRI",
+                placeholder="contoh: BBKB",
                 key="input_ticker_calc"
             )
             if ticker_input:
@@ -932,6 +945,7 @@ with tab_input:
                             'Ticker': [''] * EMPTY_ROWS,
                             **{col: [0.0] * EMPTY_ROWS for col in FEATURES}
                         })
+                        st.session_state['df_main'].index = range(1, EMPTY_ROWS + 1)
 
                     df_cur = st.session_state['df_main'].copy()
 
@@ -958,6 +972,9 @@ with tab_input:
                             # Tambah baris baru jika tidak ada baris kosong
                             new_row = pd.DataFrame([entry])
                             st.session_state['df_main'] = pd.concat([df_cur, new_row], ignore_index=True)
+                            
+                            # Jaga agar index tetap urut dari 1
+                            st.session_state['df_main'].index = range(1, len(st.session_state['df_main']) + 1)
                         st.success(f"✅ {ticker_final} berhasil ditambahkan ke tabel Input FCM. Lanjut ke tab Input Manual untuk melihat.")
 
                     st.session_state['editor_version'] += 1
@@ -991,7 +1008,7 @@ with tab_input:
         # Data dummy
         with st.expander("📌 Data Dummy — Coba Inputkan Ini"):
             st.markdown("""
-            ### **Ticker: BBRI — Tahun 2022**
+            ### **Ticker: BBKB — Tahun 2022**
 
             | Field | Nilai |
             |---|---|
@@ -1027,6 +1044,8 @@ with tab_prep:
         st.warning(f"Minimal {n_clusters + 2} saham dengan Ticker terisi diperlukan. Lengkapi data di tab Input Data terlebih dahulu.")
     else:
         df_prep = _df_check_valid.copy().reset_index(drop=True)
+        # Set index mulai dari 1
+        df_prep.index = range(1, len(df_prep) + 1)
         missing = df_prep[FEATURES].isnull().sum().sum()
 
         col1, col2 = st.columns(2)
@@ -1044,6 +1063,8 @@ with tab_prep:
 
         df_norm = pd.DataFrame(data_scaled, columns=FEATURES)
         df_norm.insert(0, 'Ticker', df_prep['Ticker'].values)
+        # Set index mulai dari 1
+        df_norm.index = range(1, len(df_norm) + 1)
 
         st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
         st.markdown("##### Data Setelah Normalisasi (0–1)")
@@ -1109,6 +1130,8 @@ with tab_model:
         membership = pd.DataFrame(u.T, columns=[f"Cluster {i+1}" for i in range(n_clusters)])
         membership.insert(0, 'Ticker', df_prep['Ticker'].values)
         membership['Cluster'] = cluster_labels + 1
+        # Set index mulai dari 1
+        membership.index = range(1, len(membership) + 1)
 
         st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
         tabM, tabC, tabK = st.tabs(["Derajat Keanggotaan", "Konvergensi Fungsi Objektif", "Metrik Pembanding (k=2..6)"])
@@ -1149,6 +1172,8 @@ with tab_model:
                 "k": k_range, "PC (FPC)": pc_list,
                 "Silhouette Score": sil_list, "Dunn Index": dunn_list
             }).round(4)
+            # Set index mulai dari 1
+            metrics_compare.index = range(1, len(metrics_compare) + 1)
             st.dataframe(metrics_compare, use_container_width=True, hide_index=True)
 
             fig_k, axes_k = plt.subplots(1, 3, figsize=(13, 3.2))
@@ -1325,6 +1350,9 @@ with tab_hasil:
                     by=sort_by, ascending=(sort_dir == "Terendah → Tertinggi")
                 ).reset_index(drop=True)
 
+            # Set index tabel hasil mulai dari 1
+            hasil_sorted.index = range(1, len(hasil_sorted) + 1)
+
             row_risk_level = hasil_sorted['Cluster'].apply(lambda c: risk_level_map.get(c - 1, "Medium"))
             row_colors = row_risk_level.map({
                 "Low": "background-color: #f0fdf4;",
@@ -1332,7 +1360,7 @@ with tab_hasil:
             }).fillna("background-color: #fffbeb;")
 
             def _highlight_row(row):
-                return [row_colors.iloc[row.name]] * len(row)
+                return [row_colors.iloc[row.name - 1]] * len(row) # Dikurangi 1 karena index sudah diset mulai 1
 
             styled_hasil = hasil_sorted.style.apply(_highlight_row, axis=1)
             st.dataframe(
